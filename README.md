@@ -117,5 +117,3 @@ code/main.asm
 ## Author
 
 Ankita Mandal
-This project is licensed under the MIT License.
-

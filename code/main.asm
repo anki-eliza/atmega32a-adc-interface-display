@@ -1,0 +1,51 @@
+// ADC program 
+.INCLUDE "M32ADEF.INC" 
+.ORG 0 
+
+//set stack pointer 
+LDI R16, HIGH(RAMEND) OUT SPH,R16 LDI R16, LOW(RAMEND) OUT SPL, R16 
+
+//create lookup table
+LDI R31, 0x00 LDI R30, 0x00
+LDI R16, 0xFC STD Z+0x00, R16
+LDI R16, 0x60 STD Z+0x01, R16
+LDI R16, 0xDA STD Z+0x02, R16
+LDI R16, 0xF2 STD Z+0x03, R16
+LDI R16, 0x66 STD Z+0x04, R16
+LDI R16, 0xB6 STD Z+0x05, R16
+LDI R16, 0xBE STD Z+0x06, R16
+LDI R16, 0xE0 STD Z+0x07, R16
+LDI R16, 0xFE STD Z+0x08, R16
+LDI R16, 0xF6 STD Z+0x09, R16
+
+//set input output pins
+LDI R16, 0x00 OUT DDRA, R16
+LDI R16, 0xFF OUT DDRB, R16
+LDI R16, 0xFF OUT DDRC, R16
+
+//Initialize ADC
+//LDI R16, 0b00100000 OUT ADMUX, R16
+LDI R16, (0<<REFS0)|(1<<ADLAR)|(0<<MUX0)    OUT ADMUX, R16
+//LDI R16, 0b10000111 OUT ADCSRA, R16
+LDI R16, (1<<ADEN)|(0<<ADSC)|(0<<ADATE)|(0<<ADIF)|(0<<ADIE)|(7<<ADPS0) OUT ADCSRA, R16
+
+Loop:
+StartConversion:	SBI ADCSRA, ADSC
+
+WaitForConversion:	IN R16, ADCSRA 
+			ANDI R16, (1<<ADIF) 
+			BREQ WaitForConversion
+
+			//Read the converted value and display the 8 MSBs
+			IN R17, ADCL 
+			IN R18, ADCH 
+			OUT PORTC, R18
+
+			//Clear ADIF by writing 1
+			SBI ADCSRA, ADIF
+
+			//Get 3 MSB and display in 7-segment LED
+			LSR R18 LSR R18 LSR R18 LSR R18 LSR R18 ANDI R18, 0x07
+			LDI R31, 0x00 MOV R30, R18
+			LD R19, Z OUT PORTB, R19
+JMP Loop
